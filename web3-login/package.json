@@ -1,0 +1,22 @@
+{
+  "name": "web3-login",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www",
+    "dev": "nodemon ./bin/www"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "crypto": "^1.0.1",
+    "debug": "~2.6.9",
+    "eth-sig-util": "^3.0.1",
+    "express": "~4.16.1",
+    "express-session": "^1.17.2",
+    "http-errors": "~1.6.3",
+    "jade": "~1.11.0",
+    "meta-auth": "^1.1.2",
+    "mongoose": "^6.0.11",
+    "morgan": "~1.9.1"
+  }
+}
