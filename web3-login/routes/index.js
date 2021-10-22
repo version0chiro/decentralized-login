@@ -1,6 +1,8 @@
 var express = require("express");
 
 var crypto = require("crypto");
+
+const jwt = require("jsonwebtoken");
 // import { recoverPersonalSignature } from "eth-sig-util";
 
 const recoverPersonalSignature =
@@ -15,27 +17,42 @@ router.get("/", function (req, res, next) {
   res.render("index", { title: "Express" });
 });
 
-// router.get("/something/:x", function (req, res, next) {
-//   console.log(req.params.x);
-//   res.send("something");
-// });
+function authenticate(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    console.log(req.headers.authorization);
+    const token = authHeader && authHeader.split(" ")[1];
+    if (token == null) return res.sendStatus(401);
 
-// router.get("/auth/:MetaAddress", metaAuth, (req, res) => {
-//   console.log(metaAuth);
-//   try {
-//     res.send(req.metaAuth.recovered);
-//   } catch (err) {
-//     console.log(err);
-//   }
-// });
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECERT, (err, user) => {
+      try {
+        if (err) return res.sendStatus(403);
+        req.user = user;
+        next();
+      } catch (err) {
+        console.log(err);
+        res.sendStatus(403);
+      }
+    });
+  } catch (err) {
+    console.log(err);
+    res.sendStatus(403);
+  }
+}
 
-// router.get("/auth/:MetaMessage/:MetaSignature", metaAuth, (req, res) => {
-//   if (req.metaAuth.recovered) {
-//     res.send(req.metaAuth.recovered);
-//   } else {
-//     res.send("error");
-//   }
-// });
+router.get("/test/posts", authenticate, (req, res) => {
+  console.log("user");
+
+  try {
+    res.json({
+      message: "success",
+      user: req.user,
+    });
+  } catch (err) {
+    console.log(err);
+    res.send("error");
+  }
+});
 
 router.post("/auth/login", async (req, res) => {
   const nouce = `Hey! Sign this message to prove you have access to this wallet. This won't cost you anything.\n\nSecurity code (you can ignore this): ${req.session.token}`;
@@ -46,8 +63,22 @@ router.post("/auth/login", async (req, res) => {
   });
 
   if (req.body.address.toLowerCase() === signature.toLowerCase()) {
-    
-    res.send("success");
+    const user = { address: req.body.address, signature: req.body.signature };
+
+    const accessToken = await jwt.sign(
+      user,
+      process.env.ACCESS_TOKEN_SECERT,
+
+      (err, token) => {
+        if (err) {
+          console.log(err);
+          res.sendStatus(500);
+        } else {
+          console.log("something");
+          res.json({ token });
+        }
+      }
+    );
   } else {
     res.send("error");
   }
